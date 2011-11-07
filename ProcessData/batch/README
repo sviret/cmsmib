@@ -1,0 +1,49 @@
+################################################
+#
+# Machine-induced background monitoring
+#
+# /batch/ directory description
+#
+# --> Link to the monitoring page:
+#
+# http://cms-beam-gas.web.cern.ch/cms-beam-gas/Images/CMS/MIB/Monitor/2011/FillTrends/MIB_FILL_monitor.html
+#
+# 26/10/2011 (cmsmib@mail.cern.fr)
+#
+################################################
+
+
+The monitoring procedure is divided into three parts: data extraction/skimming/processing.
+
+In all cases complete details are provided in the script themselves
+
+1. Data extraction from raw data:
+
+--> Main script                                     : runDQ_extraction_fillraw_fast.sh
+--> Scripts used by the main script during this step: data_fill_rawextractor_fast.sh/getRunList.py
+--> Cron job frequency                              : every 2hours
+
+--> FRAMEWORK       : CMSSW (C++)
+--> INPUT DIRECTORY : /castor/cern.ch/cms/store/data/Run2011(A/B)/Commissioning/RAW/
+--> OUTPUT DIRECTORY: /castor/cern.ch/user/c/cmsmib/Monitoring/Prod
+
+
+2. Data skimming:
+
+--> Main script                                     : runDQ_extraction_fillraw_fast.sh
+--> Scripts used by the main script during this step: data_tot.sh
+--> Cron job frequency                              : every 2hours 
+
+--> FRAMEWORK       : Tucs (python)
+--> INPUT DIRECTORY : /castor/cern.ch/user/c/cmsmib/Monitoring/Prod
+--> OUTPUT DIRECTORY: /afs/cern.ch/user/c/cmsmib/www/Images/CMS/MIB/Monitor/2011/Rootuples
+
+3. Data processing:
+
+--> Main script                                     : runDQ_extraction_fillraw_fast.sh
+--> Scripts used by the main script during this step: data_tot.sh/data_trend_monitor.sh
+--> Cron job frequency                              : every 4hours 
+
+--> FRAMEWORK       : Tucs (python)
+--> INPUT DIRECTORY : /afs/cern.ch/user/c/cmsmib/www/Images/CMS/MIB/Monitor/2011/Rootuples
+--> OUTPUT DIRECTORY: /afs/cern.ch/user/c/cmsmib/www/Images/CMS/MIB/Monitor/2011
