@@ -1,0 +1,30 @@
+############################################################
+#
+# RecoAna class
+#
+############################################################
+#
+# Author: Seb Viret <viret@in2p3.fr>
+#
+# Sep. 13, 2011
+#
+# Goal: 
+# Small macro showing how to read the info written by RECO_extractor
+#
+# Where is the main code?
+# http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/cmsmib/Extractors/RecoExtractor/
+#
+# How to use the macro?
+# Once you have a ROOT file from RECO extractor put its name and adress at the beginning MIB_ana.cxx and compile:
+#
+# [%%]> make
+# [%%]> ./MIB_ana
+#
+# This will produce two plots showing some interaction simulated
+# in the detector area
+#
+# MIB_ana.cxx is just a simple basic example, you could adapt
+# it to your need quite easily. If you have questions, just ask:
+# viret@in2p3.fr 
+#
+#############################################################

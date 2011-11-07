@@ -1,0 +1,10 @@
+2011-11-07  Seb Viret  <viret@in2p3.fr>
+ 
+       	* First import of the RecoFilter package in the cmsmib repository.
+
+	* This package is part of the first step of the offline monitoring. Documentation
+	might be fouund on the following page:
+
+	http://cms-beam-gas.web.cern.ch
+
+	This version has been tested against CMSSW_4_2_8_patch3
