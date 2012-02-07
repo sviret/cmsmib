@@ -1,3 +1,24 @@
+2012-02-07  Seb Viret  <viret@in2p3.fr>
+ 
+       	* New features for 2012 monitoring:
+
+	-> RecoExtractor.cc: new parameter (skimData), use to produce a reduced rootfile
+				(see header for more details)
+
+	-> EventExtractor.cc: new parameter (offset), remove the HLT-based selection 
+				(done in RecoFilter) 
+
+	-> TrackerExtractor.cc: add the skim option. If set to true, cluster info are not  
+				added to the rootuple
+
+	-> PixelExtractor.cc: add the skim option. Also add info about number of overflow
+				modules per event
+
+	-> HFExtractor.cc: add info on HF asymmetry, ETringsums,...
+				
+	This version has been tested against CMSSW_4_2_8_patch3
+
+
 2011-11-07  Seb Viret  <viret@in2p3.fr>
  
        	* First import of the RecoExtractor package in the cmsmib repository.

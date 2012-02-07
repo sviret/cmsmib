@@ -4,14 +4,15 @@ using namespace std;
 using namespace edm;
 
 RecoExtractor::RecoExtractor(const edm::ParameterSet& config) :
-  do_INFO_       (config.getUntrackedParameter<bool>("doINFO", false)),
-  do_EVT_        (config.getUntrackedParameter<bool>("doEvent", false)),
-  do_PIX_        (config.getUntrackedParameter<bool>("doPixel", false)),
-  do_SST_        (config.getUntrackedParameter<bool>("doTracker", false)),
-  do_HF_         (config.getUntrackedParameter<bool>("doHF", true)),
-  do_TRK_        (config.getUntrackedParameter<bool>("doTracks", false)),
+  do_INFO_       (config.getUntrackedParameter<bool>("doINFO",     false)),
+  do_EVT_        (config.getUntrackedParameter<bool>("doEvent",    false)),
+  do_PIX_        (config.getUntrackedParameter<bool>("doPixel",    false)),
+  do_SST_        (config.getUntrackedParameter<bool>("doTracker",  false)),
+  do_HF_         (config.getUntrackedParameter<bool>("doHF",       false)),
+  do_TRK_        (config.getUntrackedParameter<bool>("doTracks",   false)),
   do_VTX_        (config.getUntrackedParameter<bool>("doVertices", false)),
-  do_MC_         (config.getUntrackedParameter<bool>("doMC", false)),
+  do_MC_         (config.getUntrackedParameter<bool>("doMC",       false)),
+  do_SKIM_       (config.getUntrackedParameter<bool>("skimData",   false)),
   EVT_tag_       (config.getParameter<edm::InputTag>("L1digi_tag")),
   PIX_tag_       (config.getParameter<edm::InputTag>("pixel_tag")),
   SST_tag_       (config.getParameter<edm::InputTag>("tracker_tag")),
@@ -35,9 +36,9 @@ void RecoExtractor::beginJob()
   if (do_INFO_)  m_INFO     = new InfoExtractor();
   if (do_MC_)    m_MC       = new MCExtractor();
   if (do_EVT_)   m_EVT      = new EventExtractor(EVT_tag_);
-  if (do_PIX_)   m_PIX      = new PixelExtractor(PIX_tag_);
-  if (do_SST_)   m_SST      = new TrackerExtractor(SST_tag_);
-  if (do_HF_)    m_HF       = new HFExtractor(HF_tag_);
+  if (do_PIX_)   m_PIX      = new PixelExtractor(PIX_tag_,do_SKIM_);
+  if (do_SST_)   m_SST      = new TrackerExtractor(SST_tag_,do_SKIM_);
+  if (do_HF_)    m_HF       = new HFExtractor(HF_tag_,do_SKIM_);
   if (do_TRK_)   m_TRK      = new TrackExtractor(TRK_tag_);
   if (do_VTX_)   m_VTX      = new VertexExtractor(VTX_tag_);
 }
@@ -100,9 +101,6 @@ void RecoExtractor::endRun(Run const&, EventSetup const&) {
   
 
   if (do_INFO_) m_INFO->fillTree(nevent);
-
-  //std::cout << "Total # of events      = "<< nevent  << std::endl;
-
 }
 
 void RecoExtractor::endJob() {

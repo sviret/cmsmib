@@ -49,6 +49,7 @@ class EventExtractor
   int   m_evtID;
   int   m_BCID;
   int   m_time;
+  int   m_offset;
   int   m_lumi;
   int   m_run; 
 

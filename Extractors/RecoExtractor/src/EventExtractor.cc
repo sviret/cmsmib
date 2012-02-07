@@ -3,9 +3,6 @@
 
 EventExtractor::EventExtractor(edm::InputTag tag)
 {
-  //std::cout << "EventExtractor objet is created" << std::endl;
-
-
   m_tag = tag;
 
   // Tree definition
@@ -20,6 +17,7 @@ EventExtractor::EventExtractor(edm::InputTag tag)
   m_tree->Branch("BCID",   &m_BCID,"BCID/I");
   m_tree->Branch("PHYS",   &m_phy_decl,"PHYS/I");
   m_tree->Branch("time",   &m_time,"time/I");
+  m_tree->Branch("offset", &m_offset,"offset/I");
   m_tree->Branch("I_B1",   &m_lumi_1,"IB1/F");
   m_tree->Branch("I_B2",   &m_lumi_2,"IB2/F");
   m_tree->Branch("n_paths",  &m_n_HLTs,"n_paths/I");       
@@ -54,7 +52,6 @@ void EventExtractor::writeInfo(const edm::LuminosityBlock *lumi)
 
   for (int i=0;i<3564;++i) 
   {
-    //    std::cout << i << " / " << lumiDetails->lumiBeam1Intensity(i)/10000000000. << std::endl;
     i_bx_B1_now[i]=lumiDetails->lumiBeam1Intensity(i)/10000000000.;
     i_bx_B2_now[i]=lumiDetails->lumiBeam2Intensity(i)/10000000000.;
   }
@@ -71,6 +68,7 @@ void EventExtractor::writeInfo(const edm::Event *event, bool MC)
   m_evtID   = static_cast<int>((event->eventAuxiliary()).id().event());
   m_BCID    = (event->eventAuxiliary()).bunchCrossing();
   m_time    = static_cast<int>((event->eventAuxiliary()).time().unixTime());
+  m_offset  = static_cast<int>((event->eventAuxiliary()).time().microsecondOffset());
   m_lumi    = (event->eventAuxiliary()).luminosityBlock();
   m_run     = static_cast<int>((event->eventAuxiliary()).run());
 
@@ -96,21 +94,6 @@ void EventExtractor::writeInfo(const edm::Event *event, bool MC)
     if (gtDecisionWord[iBit]) // Is the path accepted??
       m_alg_trig_ind[iBit] = 1;
   }
-
-
-  // Here we have the base decision (only for MIB monitoring)
-  /*
-  if (m_alg_trig_ind[3]==0 && 
-      m_alg_trig_ind[4]==0 &&
-      m_alg_trig_ind[5]==0 && 
-      m_alg_trig_ind[6]==0 && 
-      m_alg_trig_ind[8]==0)
-    {
-
-      m_selected=false;
-      //return;
-    }
-  */
 
   if (!MC) m_selected=false;
 
@@ -140,32 +123,7 @@ void EventExtractor::writeInfo(const edm::Event *event, bool MC)
     {
       if (triggerResults->accept(i)!=0)
       {
-	size_t found;
-    
-	found=(triggerNames.triggerName(i)).find("BeamGas");
-
-	if (int(found)==-1)
-	  found=(triggerNames.triggerName(i)).find("Interbunch");
-
-	if (int(found)==-1)
-	  found=(triggerNames.triggerName(i)).find("PreCollisions");
-
-	if (int(found)==-1)
-	  found=(triggerNames.triggerName(i)).find("BeamHalo");
-
-	if (int(found)==-1)
-	  found=(triggerNames.triggerName(i)).find("RegionalCosmic");
-
-	if (int(found)==-1) continue;
-
 	m_selected=true;
-
-	/*
-	  std::cout <<  i
-	  << "trigger pass= " << triggerNames.triggerName(i)
-	  << std::endl;
-	*/
-
 	m_HLT_vector.push_back(triggerNames.triggerName(i));
 	m_n_HLTs++;
       }
@@ -184,6 +142,7 @@ void EventExtractor::reset()
   m_evtID    =  0;
   m_BCID     =  0;
   m_time     =  0;
+  m_offset   =  0;
   m_lumi     =  0;
   m_run      =  0;
   m_phy_decl = 0; 
@@ -193,7 +152,6 @@ void EventExtractor::reset()
 
   for (int i=0;i<64;i++) m_tech_trig_ind[i] = 0; 
   for (int i=0;i<128;i++) m_alg_trig_ind[i] = 0;
-
 }
 
 

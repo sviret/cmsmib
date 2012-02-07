@@ -35,11 +35,10 @@ class TrackerExtractor
 
  public:
 
-  TrackerExtractor(edm::InputTag tag);
+  TrackerExtractor(edm::InputTag tag,bool skim);
   ~TrackerExtractor();
 
 
-  //  void writeInfo(const reco::Tracker *part, int index); 
   void writeInfo(const edm::Event *event, const edm::EventSetup *setup); 
   void init(const edm::EventSetup *setup); 
 
@@ -54,11 +53,12 @@ class TrackerExtractor
 
   edm::ESHandle<TrackerGeometry> theTrackerGeometry;
   edm::InputTag m_tag;
+  bool m_skim;
 
 
   // Strips info
 
-  static const int      m_sstclus_MAX    = 10000;
+  static const int      m_sstclus_MAX    = 100000;
 
   int    		m_sclus;
   float                 m_sstclus_x[m_sstclus_MAX];

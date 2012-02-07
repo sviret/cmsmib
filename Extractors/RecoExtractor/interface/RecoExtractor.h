@@ -63,7 +63,7 @@ class RecoExtractor : public edm::EDAnalyzer{
   bool do_TRK_;
   bool do_VTX_;
   bool do_MC_;
-
+  bool do_SKIM_;
 
   edm::InputTag INFO_tag_;  // 
   edm::InputTag EVT_tag_;  // 

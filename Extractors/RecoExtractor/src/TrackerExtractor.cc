@@ -1,12 +1,12 @@
 #include "../interface/TrackerExtractor.h"
 
 
-TrackerExtractor::TrackerExtractor(edm::InputTag tag)
+TrackerExtractor::TrackerExtractor(edm::InputTag tag, bool skim)
 {
   //std::cout << "TrackerExtractor objet is created" << std::endl;
 
-
   m_tag = tag;
+  m_skim= skim;
 
   // Tree definition
 
@@ -15,10 +15,14 @@ TrackerExtractor::TrackerExtractor(edm::InputTag tag)
   // Branches definition
 
   m_tree->Branch("SST_n",        &m_sclus,"SST_n/I");
-  m_tree->Branch("SST_x",        &m_sstclus_x,"SST_x[SST_n]/F");
-  m_tree->Branch("SST_y",        &m_sstclus_y,"SST_y[SST_n]/F");
-  m_tree->Branch("SST_z",        &m_sstclus_z,"SST_z[SST_n]/F");
-  m_tree->Branch("SST_charge",   &m_sstclus_e,"SST_charge[SST_n]/F");
+
+  if (!m_skim)
+  {
+    m_tree->Branch("SST_x",        &m_sstclus_x,"SST_x[SST_n]/F");
+    m_tree->Branch("SST_y",        &m_sstclus_y,"SST_y[SST_n]/F");
+    m_tree->Branch("SST_z",        &m_sstclus_z,"SST_z[SST_n]/F");
+    m_tree->Branch("SST_charge",   &m_sstclus_e,"SST_charge[SST_n]/F");
+  }
 
   // Set everything to 0
 
@@ -61,18 +65,23 @@ void TrackerExtractor::writeInfo(const edm::Event *event, const edm::EventSetup 
     {
       if (m_sclus < m_sstclus_MAX) 
       {
-	SiStripClusterInfo* siStripClusterInfo = new SiStripClusterInfo(*iter,*setup,std::string(""));
 
-	clus_pos = siStripClusterInfo->baryStrip();
+	if (!m_skim)
+	{
+	  SiStripClusterInfo* siStripClusterInfo = new SiStripClusterInfo(*iter,*setup,std::string(""));
+	  
+	  clus_pos = siStripClusterInfo->baryStrip();
+	  
+	  LocalPoint clustlp = theGeomDet->specificTopology().localPosition( MeasurementPoint(clus_pos,0.));
+	  // get the cluster position in global coordinates (cm)
+	  GlobalPoint pos = theTrackerGeometry->idToDet(detid)->surface().toGlobal(clustlp);
+	  
+	  m_sstclus_x[m_sclus] = pos.x();
+	  m_sstclus_y[m_sclus] = pos.y();
+	  m_sstclus_z[m_sclus] = pos.z();
+	  m_sstclus_e[m_sclus] = siStripClusterInfo->charge();
+	}
 
-	LocalPoint clustlp = theGeomDet->specificTopology().localPosition( MeasurementPoint(clus_pos,0.));
-	// get the cluster position in global coordinates (cm)
-	GlobalPoint pos = theTrackerGeometry->idToDet(detid)->surface().toGlobal(clustlp);
-
-	m_sstclus_x[m_sclus] = pos.x();
-	m_sstclus_y[m_sclus] = pos.y();
-	m_sstclus_z[m_sclus] = pos.z();
-	m_sstclus_e[m_sclus] = siStripClusterInfo->charge();
 	m_sclus++;
 
       }
@@ -82,18 +91,6 @@ void TrackerExtractor::writeInfo(const edm::Event *event, const edm::EventSetup 
   TrackerExtractor::fillTree();
 }
 
-/*
-void TrackerExtractor::writeInfo(const reco::Tracker *part, int index) 
-{
-  if (index>=m_vertices_MAX) return;
-
-  m_vtx_vx[index]     = part->position().x();
-  m_vtx_vy[index]     = part->position().y();
-  m_vtx_vz[index]     = part->position().z();
-  m_vtx_isFake[index] = part->isFake();
-  m_vtx_ndof[index]   = part->ndof();
-}
-*/
 
 // Method initializing everything (to do for each event)
 

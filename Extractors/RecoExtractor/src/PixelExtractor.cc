@@ -1,9 +1,10 @@
 #include "../interface/PixelExtractor.h"
 
 
-PixelExtractor::PixelExtractor(edm::InputTag tag)
+PixelExtractor::PixelExtractor(edm::InputTag tag, bool skim)
 {
   m_tag = tag;
+  m_skim= skim;
 
   // Tree definition
 
@@ -12,13 +13,22 @@ PixelExtractor::PixelExtractor(edm::InputTag tag)
   // Branches definition
 
   m_tree->Branch("PIX_n",         &m_pclus,    "PIX_n/I");
-  m_tree->Branch("PIX_x",         &m_pixclus_x,"PIX_x[PIX_n]/F");
-  m_tree->Branch("PIX_y",         &m_pixclus_y,"PIX_y[PIX_n]/F");
-  m_tree->Branch("PIX_z",         &m_pixclus_z,"PIX_z[PIX_n]/F");
-  m_tree->Branch("PIX_charge",    &m_pixclus_e,"PIX_charge[PIX_n]/F");
+
+  if (!m_skim)
+  {
+    m_tree->Branch("PIX_x",         &m_pixclus_x,"PIX_x[PIX_n]/F");
+    m_tree->Branch("PIX_y",         &m_pixclus_y,"PIX_y[PIX_n]/F");
+    m_tree->Branch("PIX_z",         &m_pixclus_z,"PIX_z[PIX_n]/F");
+    m_tree->Branch("PIX_charge",    &m_pixclus_e,"PIX_charge[PIX_n]/F");
+  }
+
   m_tree->Branch("PIX_mcharge_FM",&m_mch_fm,   "PIX_mcharge_FM/F");
   m_tree->Branch("PIX_mcharge_B", &m_mch_b,    "PIX_mcharge_B/F");
   m_tree->Branch("PIX_mcharge_FP",&m_mch_fp,   "PIX_mcharge_FP/F");
+
+  m_tree->Branch("PIX_module_SAT",&n_sat,           "PIX_module_SAT/I");
+  m_tree->Branch("PIX_barrel_SAT", &n_sat_barrel,   "PIX_barrel_SAT[3]/I");
+  m_tree->Branch("PIX_forward_SAT", &n_sat_forward, "PIX_forward_SAT[2]/I");
 
   // Set everything to 0
 
@@ -45,9 +55,73 @@ void PixelExtractor::writeInfo(const edm::Event *event)
   edm::Handle< edmNew::DetSetVector<SiPixelCluster> > pClusterColl;
   event->getByLabel(m_tag, pClusterColl);
 
+  edm::Handle< edm::DetSetVector<PixelDigi> > pDigiColl;
+  event->getByLabel("siPixelDigis", pDigiColl);
+
   int n_clus[3]    = {0,0,0};
   double e_clus[3] = {0.,0.,0.};
+  
+  // Iterate on detector units (look for overflow modules)
 
+  edm::DetSetVector<PixelDigi>::const_iterator DSViterDigi = pDigiColl->begin();
+  
+  for( ; DSViterDigi != pDigiColl->end(); DSViterDigi++) 
+  {
+    DetId detIdObject(DSViterDigi->detId());
+
+    edm::DetSet<PixelDigi>::const_iterator begin=DSViterDigi->begin();
+    edm::DetSet<PixelDigi>::const_iterator end  =DSViterDigi->end();
+    
+    bool barrel = detIdObject.subdetId() == static_cast<int>(PixelSubdetector::PixelBarrel);
+    bool endcap = detIdObject.subdetId() == static_cast<int>(PixelSubdetector::PixelEndcap);
+    int detpos  = -1;
+
+    if (endcap)
+    {
+      PixelEndcapName::HalfCylinder position = PixelEndcapName(detIdObject).halfCylinder();
+
+      if (position == PixelEndcapName::mI || position == PixelEndcapName::mO) // FPIX-
+	detpos = 0;
+
+      if (position == PixelEndcapName::pI || position == PixelEndcapName::pO) // FPIX+
+	detpos = 2;
+    }
+
+    if (barrel)
+      detpos = 1;
+
+    const PixelGeomDetUnit* theGeomDet = dynamic_cast<const PixelGeomDetUnit*>(theTrackerGeometry->idToDet(detIdObject));
+
+    if (DSViterDigi->size()==192 && (theGeomDet->specificTopology().nrows()==80 || theGeomDet->specificTopology().ncolumns()!=416))
+    {
+      ++n_sat;
+
+      if (detpos==1)
+      {
+	PXBDetId bdetid(detIdObject);
+	++n_sat_barrel[bdetid.layer()-1];
+      }
+
+      if (detpos==0) ++n_sat_forward[0];
+      if (detpos==2) ++n_sat_forward[1];
+    }
+
+    if (DSViterDigi->size()==384)
+    {
+      ++n_sat;
+
+      if (detpos==1)
+      {
+	PXBDetId bdetid(detIdObject);
+	++n_sat_barrel[bdetid.layer()-1];
+      }
+
+      if (detpos==0) ++n_sat_forward[0];
+      if (detpos==2) ++n_sat_forward[1];
+    }
+  }
+
+  // Then look at the clusters
 
   for (edmNew::DetSetVector<SiPixelCluster>::const_iterator DSViter=pClusterColl->begin(); DSViter!=pClusterColl->end();DSViter++ ) 
   {
@@ -83,17 +157,21 @@ void PixelExtractor::writeInfo(const edm::Event *event)
     {
       if (m_pclus < m_pixclus_MAX) 
       {
-	LocalPoint clustlp = topol->localPosition( MeasurementPoint(iter->x(), iter->y()));
-	// get the cluster position in global coordinates (cm)
-	GlobalPoint pos = theTrackerGeometry->idToDet(detid)->surface().toGlobal(clustlp);
+	if (!m_skim)
+	{
+	  LocalPoint clustlp = topol->localPosition( MeasurementPoint(iter->x(), iter->y()));
+	  // get the cluster position in global coordinates (cm)
+	  GlobalPoint pos = theTrackerGeometry->idToDet(detid)->surface().toGlobal(clustlp);
 
-	m_pixclus_x[m_pclus] = pos.x();
-	m_pixclus_y[m_pclus] = pos.y();
-	m_pixclus_z[m_pclus] = pos.z();
-	m_pixclus_e[m_pclus] = iter->charge();
+	  m_pixclus_x[m_pclus] = pos.x();
+	  m_pixclus_y[m_pclus] = pos.y();
+	  m_pixclus_z[m_pclus] = pos.z();
+	  m_pixclus_e[m_pclus] = iter->charge();
+	}
+
 	m_pclus++;
 
-	if (iter->charge()>4000. )
+	if (iter->charge()>7000. )
 	{
 	  ++n_clus[detpos];
 	  e_clus[detpos]+=iter->charge();
@@ -101,9 +179,6 @@ void PixelExtractor::writeInfo(const edm::Event *event)
       }
     }
   } // End of pixel cluster loop
-
-
-  // Compute asymmetry
 
   for (int i=0;i<3;++i) 
   {
@@ -115,27 +190,18 @@ void PixelExtractor::writeInfo(const edm::Event *event)
   m_mch_b  = e_clus[1];
   m_mch_fp = e_clus[2];
 
-
   PixelExtractor::fillTree();
 }
 
-/*
-void PixelExtractor::writeInfo(const reco::Pixel *part, int index) 
-{
-  if (index>=m_vertices_MAX) return;
-
-  m_vtx_vx[index]     = part->position().x();
-  m_vtx_vy[index]     = part->position().y();
-  m_vtx_vz[index]     = part->position().z();
-  m_vtx_isFake[index] = part->isFake();
-  m_vtx_ndof[index]   = part->ndof();
-}
-*/
 
 // Method initializing everything (to do for each event)
 
 void PixelExtractor::reset()
 {
+  n_sat = 0;
+   
+  for (int i=0;i<3;++i) n_sat_barrel[i]=0;
+  for (int i=0;i<2;++i) n_sat_forward[i]=0;
 
   m_pclus     = 0;
   m_mch_fm    = 0.;

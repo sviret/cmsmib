@@ -19,6 +19,8 @@
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 
 #include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h" 
+#include "DataFormats/L1Trigger/interface/L1HFRings.h"
+#include "DataFormats/L1Trigger/interface/L1HFRingsFwd.h"
 
 //Include std C++
 #include <iostream>
@@ -33,7 +35,7 @@ class HFExtractor
 
  public:
 
-  HFExtractor(edm::InputTag tag);
+  HFExtractor(edm::InputTag tag, bool skim);
   ~HFExtractor();
 
   void writeInfo(const edm::Event *event); 
@@ -52,17 +54,22 @@ class HFExtractor
   const CaloSubdetectorGeometry* HFgeom;
 
   edm::InputTag m_tag;
-
+  bool m_skim;
 
   // HF info
 
-  static const int      m_HFclus_MAX     = 2000;
+  static const int      m_HFclus_MAX     = 5000;
 
   int    		m_nHF;
+  int                   m_Etring[4];
+  float                 m_Etring_real[4];
+  float                 m_Ettower_real[4][18];
+  float                 m_HF_asym[100];
   float                 m_HF_eta[m_HFclus_MAX];
   float                 m_HF_phi[m_HFclus_MAX];
   float                 m_HF_z[m_HFclus_MAX];
   float                 m_HF_e[m_HFclus_MAX];
+  float                 m_HF_time[m_HFclus_MAX];
   float                 m_asymh;
   float                 m_mE_hfm;
   float                 m_mE_hfp;
