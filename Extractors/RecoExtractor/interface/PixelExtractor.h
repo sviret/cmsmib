@@ -74,6 +74,9 @@ class PixelExtractor
   float                 m_mch_b;
   float                 m_mch_fp;
 
+  int                   m_fm;
+  int                   m_fp;
+
   int                   n_sat;
   int                   n_sat_barrel[3];
   int                   n_sat_forward[2];

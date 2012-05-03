@@ -37,7 +37,8 @@ InfoExtractor::InfoExtractor()
 
 void InfoExtractor::init(const edm::Run *run, const edm::EventSetup *setup)
 {
-  m_l1GtUtils.retrieveL1EventSetup(*setup);
+  //  m_l1GtUtils.retrieveL1EventSetup(*setup);
+  //  m_l1GtUtils.getL1GtRunCache(*run, *setup, true, true);
 
   const std::string processName = "HLT"; 
   bool changed(true);
@@ -106,6 +107,7 @@ void InfoExtractor::writeInfo(const edm::Event *event, const edm::EventSetup *se
   m_HLT_prescales.clear();
 
   int err = -1;
+  m_l1GtUtils.getL1GtRunCache(*event, *setup, true, true);
 
   L1GtUtils::TriggerCategory trigCategory = L1GtUtils::AlgorithmTrigger;
   const std::vector<int>& pfSetAlgorithmTrigger =
@@ -114,6 +116,9 @@ void InfoExtractor::writeInfo(const edm::Event *event, const edm::EventSetup *se
     m_l1GtUtils.triggerMaskSet(trigCategory, err);
 
   int iBit = -1;
+
+  //  std::cout << pfSetAlgorithmTrigger.size() << std::endl; 
+
   for (std::vector<int>::const_iterator cItBit =
 	 pfSetAlgorithmTrigger.begin(); cItBit
 	 != pfSetAlgorithmTrigger.end(); ++cItBit) 
@@ -121,7 +126,7 @@ void InfoExtractor::writeInfo(const edm::Event *event, const edm::EventSetup *se
       ++iBit;  
       m_alg_trig_pre[iBit] = (*cItBit); 
       //if (m_alg_trig_pre[iBit])
-	//std::cout << iBit << " / " << m_alg_trig_pre[iBit] << std::endl;
+      //      std::cout << iBit << " /A/ " << m_alg_trig_pre[iBit] << std::endl;
     }
 
   iBit=-1;
@@ -132,7 +137,7 @@ void InfoExtractor::writeInfo(const edm::Event *event, const edm::EventSetup *se
     {    
       iBit++;
       m_alg_trig_act[iBit] = static_cast<int>(*cItBit); 
-      //std::cout << iBit << " / " << m_alg_trig_act[iBit] << std::endl;
+      //std::cout << iBit << " /B/ " << m_alg_trig_act[iBit] << std::endl;
     }
 
   trigCategory = L1GtUtils::TechnicalTrigger;
@@ -209,13 +214,13 @@ void InfoExtractor::reset()
 
   for (int i=0;i<64;i++)
   {
-    m_tech_trig_pre[i] = 0; 
+    m_tech_trig_pre[i] = 1; 
     m_tech_trig_act[i] = 0; 
   }
 
   for (int i=0;i<128;i++)
   {
-    m_alg_trig_pre[i] = 0;   
+    m_alg_trig_pre[i] = 1;   
     m_alg_trig_act[i] = 0; 
   }
 

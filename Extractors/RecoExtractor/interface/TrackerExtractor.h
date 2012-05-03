@@ -61,6 +61,9 @@ class TrackerExtractor
   static const int      m_sstclus_MAX    = 100000;
 
   int    		m_sclus;
+  int    		m_sclus_fm;
+  int    		m_sclus_fp;
+
   float                 m_sstclus_x[m_sstclus_MAX];
   float                 m_sstclus_y[m_sstclus_MAX];
   float                 m_sstclus_z[m_sstclus_MAX];

@@ -99,7 +99,9 @@ void EventExtractor::writeInfo(const edm::Event *event, bool MC)
 
   // Look at the technical bits
 
-  m_phy_decl = L1GTRR.gtFdlWord().physicsDeclared();
+  m_phy_decl  = L1GTRR.gtFdlWord().physicsDeclared();
+  //pfIndexAlgo = static_cast<unsigned int>( ( L1GTRR.gtFdlWord() ).gtPrescaleFactorIndexAlgo());   
+  //pfIndexTech = static_cast<unsigned int>( ( L1GTRR.gtFdlWord() ).gtPrescaleFactorIndexTech());
 
   const L1GtPsbWord psb = L1GTRR.gtPsbWord(0xbb09, 0); 
   

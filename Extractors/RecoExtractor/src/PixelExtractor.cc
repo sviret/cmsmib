@@ -22,6 +22,9 @@ PixelExtractor::PixelExtractor(edm::InputTag tag, bool skim)
     m_tree->Branch("PIX_charge",    &m_pixclus_e,"PIX_charge[PIX_n]/F");
   }
 
+  m_tree->Branch("PIX_FM",&m_fm,   "PIX_FM/I");
+  m_tree->Branch("PIX_FP",&m_fp,   "PIX_FP/I");
+
   m_tree->Branch("PIX_mcharge_FM",&m_mch_fm,   "PIX_mcharge_FM/F");
   m_tree->Branch("PIX_mcharge_B", &m_mch_b,    "PIX_mcharge_B/F");
   m_tree->Branch("PIX_mcharge_FP",&m_mch_fp,   "PIX_mcharge_FP/F");
@@ -69,8 +72,8 @@ void PixelExtractor::writeInfo(const edm::Event *event)
   {
     DetId detIdObject(DSViterDigi->detId());
 
-    edm::DetSet<PixelDigi>::const_iterator begin=DSViterDigi->begin();
-    edm::DetSet<PixelDigi>::const_iterator end  =DSViterDigi->end();
+    //edm::DetSet<PixelDigi>::const_iterator begin=DSViterDigi->begin();
+    //edm::DetSet<PixelDigi>::const_iterator end  =DSViterDigi->end();
     
     bool barrel = detIdObject.subdetId() == static_cast<int>(PixelSubdetector::PixelBarrel);
     bool endcap = detIdObject.subdetId() == static_cast<int>(PixelSubdetector::PixelEndcap);
@@ -171,8 +174,11 @@ void PixelExtractor::writeInfo(const edm::Event *event)
 
 	m_pclus++;
 
-	if (iter->charge()>7000. )
+	if (iter->charge()>6000. )
 	{
+	  if (detpos==0) ++m_fm;
+	  if (detpos==2) ++m_fp;
+
 	  ++n_clus[detpos];
 	  e_clus[detpos]+=iter->charge();
 	} 
@@ -207,7 +213,9 @@ void PixelExtractor::reset()
   m_mch_fm    = 0.;
   m_mch_b     = 0.;
   m_mch_fp    = 0.;
-  
+  m_fm        = 0;
+  m_fp        = 0;
+
   for (int i=0;i<m_pixclus_MAX;++i) 
   {
     m_pixclus_x[i] = 0.;

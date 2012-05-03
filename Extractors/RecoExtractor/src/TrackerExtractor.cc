@@ -16,6 +16,9 @@ TrackerExtractor::TrackerExtractor(edm::InputTag tag, bool skim)
 
   m_tree->Branch("SST_n",        &m_sclus,"SST_n/I");
 
+  m_tree->Branch("SST_fm",       &m_sclus_fm,"SST_fm/I");
+  m_tree->Branch("SST_fp",       &m_sclus_fp,"SST_fp/I");
+
   if (!m_skim)
   {
     m_tree->Branch("SST_x",        &m_sstclus_x,"SST_x[SST_n]/F");
@@ -50,7 +53,7 @@ void TrackerExtractor::writeInfo(const edm::Event *event, const edm::EventSetup 
   event->getByLabel(m_tag, sClusterColl);
 
   float clus_pos = 0.;
- 
+  float radius = 0.;
 
   for (edmNew::DetSetVector<SiStripCluster>::const_iterator DSViter=sClusterColl->begin(); DSViter!=sClusterColl->end();DSViter++ ) 
   {
@@ -65,10 +68,9 @@ void TrackerExtractor::writeInfo(const edm::Event *event, const edm::EventSetup 
     {
       if (m_sclus < m_sstclus_MAX) 
       {
-
 	if (!m_skim)
 	{
-	  SiStripClusterInfo* siStripClusterInfo = new SiStripClusterInfo(*iter,*setup,std::string(""));
+	  SiStripClusterInfo* siStripClusterInfo =  new SiStripClusterInfo(*iter,*setup,detid);
 	  
 	  clus_pos = siStripClusterInfo->baryStrip();
 	  
@@ -80,6 +82,18 @@ void TrackerExtractor::writeInfo(const edm::Event *event, const edm::EventSetup 
 	  m_sstclus_y[m_sclus] = pos.y();
 	  m_sstclus_z[m_sclus] = pos.z();
 	  m_sstclus_e[m_sclus] = siStripClusterInfo->charge();
+
+	  // Count cluster in the TIB
+	  if (fabs(pos.z())>120.) 
+	  {
+	    radius = sqrt(pos.x()*pos.x()+pos.y()*pos.y());
+	    
+	    if (radius>40.) continue;
+
+	    if (pos.z()>0.) ++m_sclus_fm; 
+	    if (pos.z()<0.) ++m_sclus_fp; 
+	  }
+
 	}
 
 	m_sclus++;
@@ -97,7 +111,9 @@ void TrackerExtractor::writeInfo(const edm::Event *event, const edm::EventSetup 
 void TrackerExtractor::reset()
 {
 
-  m_sclus  = 0;
+  m_sclus    = 0;
+  m_sclus_fm = 0;
+  m_sclus_fp = 0;
 
   for (int i=0;i<m_sstclus_MAX;++i) 
   {

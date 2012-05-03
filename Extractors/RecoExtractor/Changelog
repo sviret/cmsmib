@@ -1,3 +1,14 @@
+2012-05-03  Seb Viret  <viret@in2p3.fr>
+ 
+       	* Code adapted to CMSSW 5_2 (2012 release) 
+
+	-> L1 params extraction modified (v2 to v3)
+
+	-> Added some new Tracker and Pixel observables in order to save python exec time
+
+	This version has been tested against CMSSW_5_2_3_patch3
+
+
 2012-02-07  Seb Viret  <viret@in2p3.fr>
  
        	* New features for 2012 monitoring:
