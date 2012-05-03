@@ -31,13 +31,7 @@ bool RecoFilter::filter(edm::Event& event, const edm::EventSetup& setup)
 	  found=(triggerNames.triggerName(i)).find("Interbunch");
 
 	if (int(found)==-1)
-	  found=(triggerNames.triggerName(i)).find("PreCollisions");
-
-	if (int(found)==-1)
 	  found=(triggerNames.triggerName(i)).find("BeamHalo");
-
-	if (int(found)==-1)
-	  found=(triggerNames.triggerName(i)).find("RegionalCosmic");
 
 	if (int(found)==-1) continue;
 

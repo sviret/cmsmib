@@ -1,3 +1,11 @@
+2012-05-03  Seb Viret  <viret@in2p3.fr>
+ 
+       	* Adaptation of the package to 2012 data-taking
+
+	* Minor corrections, in fact....
+
+	This version has been tested against CMSSW_5_2_3_patch3
+
 2011-11-07  Seb Viret  <viret@in2p3.fr>
  
        	* First import of the RecoFilter package in the cmsmib repository.
