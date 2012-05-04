@@ -8,7 +8,9 @@
 # 
 # Creates a list of FILL with their corresponding run
 # numbers
-# 
+#
+# Only the runs recorded with an InterFill/Circulating or
+# a Physics/Collisions menu are accounted for
 # 
 # Adaptation: Seb Viret <viret@in2p3.fr>  (26/11/2010)
 #
@@ -310,9 +312,9 @@ def getRunInfo(dbsession,c,runnum,lmin):
 
 
         
-def getRunList(dbsession,c,runnum):
+def getRunList(dbsession,c,runnum,L1name,HLTname):
     '''
-    Create a run list starting from run RUNNUM+1
+    Create a run list starting from run RUNNUM+1, for runs having the correponding L1/HLT menus
     '''
     list_run=[]
     split_start=[]
@@ -357,25 +359,24 @@ def getRunList(dbsession,c,runnum):
 
                 runval=run
 
+                # First check that the run lasts at least at certain duration
 
+                if minlength!=0.0:
+                    run_result=getRunInfo(dbsession,c,run,minlength)
 
-                # First check that the run lasts at least 30 minutes
+                    if run_result[1] == '':
+                        continue
 
-                run_result=getRunInfo(dbsession,c,run,minlength)
+                # Then select only the run having the trigger menus we are looking for
 
-                if run_result[1] == '':
-                    continue
-
-                # Then select only clean collision data
-
-                L1key  = run_result[1]
+                L1key  = L1key_ForRun(dbsession,c,run)
                 HLTkey = HLTkey_ForRun(dbsession,c,run)
                 FILLnum= FillNum_ForRun(dbsession,c,run)
-                if 'collisions' not in L1key:
+
+                if (L1name not in L1key or HLTname not in HLTkey):
                     continue
                 
-                if 'physics' not in HLTkey:
-                    continue
+                #Then we perform some other checks
 
                 if '2760GeV' in HLTkey:
                     continue
@@ -386,7 +387,7 @@ def getRunList(dbsession,c,runnum):
                 if FILLnum == '':
                     continue
         
-                print FILLnum,run,L1key,HLTkey        
+                #print FILLnum,run,L1key,HLTkey        
 
                 list_run.append(run)
 
@@ -414,10 +415,9 @@ def main():
     c=constants()
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),description="Dump Run info")
     parser.add_argument('-c',dest='connect',action='store',required=True,help='connect string to trigger DB(required)')
-    parser.add_argument('-r',dest='runnumber',action='store',required=False,help='run number')
+    parser.add_argument('-f',dest='fillnumber',action='store',required=True,help='initial fill number')
 
     args      = parser.parse_args()
-    #datenow   = time.time()
 
     connectstring=args.connect
     connectparser=connectstrParser.connectstrParser(connectstring)
@@ -432,54 +432,81 @@ def main():
         connectstring=connectparser.fullfrontierStr(connectparser.schemaname(),p.parameterdict())
 
         
-    lastfillrun1  = args.runnumber
+    lastfillrun1  = args.fillnumber
 
-    run_list      = [] # The list of runs we will get
-    fill_list     = [] # The list of fills we will get
-    run_list_new  = [] # The list of runs we will get
-    f=open('the_list.txt','r+') # The list of runs we start from 
-    f2=open('the_list_new.txt','w') # The list of runs we will write
+    fill_list_coll     = [] # The list of fills we will get
+    fill_list_inter    = [] # The list of fills we will get
+    run_list_coll      = [] # The list of collision runs we will get
+    run_list_inter     = [] # The list of interfill runs we will get
+    run_list_coll_new  = [] # The list of collision runs we will get
+    run_list_inter_new = [] # The list of interfill runs we will get
+    
+    f=open('the_collision_list.txt','r+') # The list of runs we start from 
+    f2=open('the_collision_list_new.txt','w') # The list of runs we will write
+    g=open('the_interfill_list.txt','r+') # The list of runs we start from 
+    g2=open('the_interfill_list_new.txt','w') # The list of runs we will write
 
     for line in f:
         if '1' in line:
             split = line.split(' ')[0:]
-            fill_list.append(int(split[0]))
+            fill_list_coll.append(int(split[0]))
             lastfillrunlist = split[1].split('_')
 
             for i in range(len(lastfillrunlist)-1):
-                run_list.append(int(lastfillrunlist[i]))
+                run_list_coll.append(int(lastfillrunlist[i]))
 
+    for line in g:
+        if '1' in line:
+            split = line.split(' ')[0:]
+            fill_list_inter.append(int(split[0]))
+            lastfillrunlist = split[1].split('_')
+
+            for i in range(len(lastfillrunlist)-1):
+                run_list_inter.append(int(lastfillrunlist[i]))
+                    
             #print lastfillrunlist
 
-    fill_list.sort()
-    run_list.sort()
-
-    print len(run_list)
-
-    if len(run_list)==0:
-        fill_list.append(2125)
-        run_list.append(176765)
+    fill_list_coll.sort()
+    fill_list_inter.sort()
+    run_list_coll.sort()
+    run_list_inter.sort()
     
-    print 'Last run seen is', run_list[len(run_list)-1]
-    print '...we start from there -200 (to deal with late runs)...'
+    print "Collision run list contains ",len(run_list_coll)," runs..."
+    print "Interfill run list contains ",len(run_list_inter)," runs..."
 
+    print "...Now look for new runs..."
+
+    if len(run_list_coll)==0:
+        fill_list_coll.append(2355)
+        run_list_coll.append(187000)
+        
+    if len(run_list_inter)==0:
+        fill_list_inter.append(2355)
+        run_list_inter.append(187000)
+
+
+    # Connect to the database
     svc=coral.ConnectionService()
     session=svc.connect(connectstring,accessMode=coral.access_ReadOnly)
 
-    is_ok = True
-    firstrun = int(run_list[len(run_list)-1]-200)
+    is_ok    = True
+    firstrun_coll  = int(run_list_coll[len(run_list_coll)-1]-200)
+    firstrun_inter = int(run_list_inter[len(run_list_inter)-1]-200)
 
-    run_list_new=getRunList(session,c,firstrun)
-    run_list_new.sort()
+    # Create the run lists corresponding to what we are looking for
+    run_list_coll_new=getRunList(session,c,firstrun_coll,'collisions','physics')
+    run_list_inter_new=getRunList(session,c,firstrun_coll,'circulating','Interfill')
 
-    #print run_list
+    # Sort the lists
+    run_list_coll_new.sort()
+    run_list_inter_new.sort()
+    
+    for run in run_list_coll_new:        
 
-    for run in run_list_new:        
-
-        if run in run_list:
+        if run in run_list_coll:
             continue
 
-        run_list.append(run)
+        run_list_coll.append(run)
         fillnum = FillNum_ForRun(session,c,run)
         
         if fillnum == '0':
@@ -488,23 +515,50 @@ def main():
         if fillnum == 'None':
             continue
 
-        if int(fillnum) not in fill_list: # We got a new fill
-            print int(fillnum)
-            fill_list.append(int(fillnum))
+        if int(fillnum) not in fill_list_coll: # We got a new fill
+            fill_list_coll.append(int(fillnum))
 
+    for run in run_list_inter_new:        
 
-    fill_list.sort()
-    run_list.sort()
+        if run in run_list_inter:
+            continue
 
-    print "Here ",fill_list
+        run_list_inter.append(run)
+        fillnum = FillNum_ForRun(session,c,run)
+        
+        if fillnum == '0':
+            continue
+        
+        if fillnum == 'None':
+            continue
 
-    for fill in fill_list:  
+        if int(fillnum) not in fill_list_inter: # We got a new fill
+            fill_list_inter.append(int(fillnum))
+
+    fill_list_coll.sort()
+    fill_list_inter.sort()
+    run_list_coll.sort()
+    run_list_inter.sort()
+    
+    #print "Here ",fill_list_coll
+    #print "Here ",fill_list_inter
+
+    for fill in fill_list_coll:  
 
         f2.write("\n%d "%(fill))
         
-        for run in run_list:
+        for run in run_list_coll:
             if int(FillNum_ForRun(session,c,run)) == fill:
                 f2.write("%d_"%(run))
+                
+
+    for fill in fill_list_inter:  
+
+        g2.write("\n%d "%(fill))
+        
+        for run in run_list_inter:
+            if int(FillNum_ForRun(session,c,run)) == fill:
+                g2.write("%d_"%(run))
         
     
     del session

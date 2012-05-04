@@ -19,6 +19,7 @@
 # ${8}: the last RAW file to process
 # ${9}: the job rank in the process
 # ${10}: the total number of jobs
+# ${11}: the type of run (collision of interfill)
 #
 # Author: Seb Viret <viret@in2p3.fr>  (26/10/2011)
 #
@@ -34,12 +35,12 @@
 
 CMSSW_PROJECT_SRC=${5}
 STEP=ProcessData
-YEAR=2011
+YEAR=2012
 TOP=$PWD
 
 
 cd $CMSSW_PROJECT_SRC
-export SCRAM_ARCH=slc5_amd64_gcc434
+export SCRAM_ARCH=slc5_amd64_gcc462
 eval `scramv1 runtime -sh` 
 
 
@@ -68,7 +69,7 @@ compteur_real=0
 echo $nfirst,$nlast
 rm *.root
 
-cp $CMSSW_PROJECT_SRC/$STEP/test/BH_data_procraw_BASE.py BH_dummy.py 
+cp $CMSSW_PROJECT_SRC/$STEP/test/BH_data_procraw_${11}_BASE.py BH_dummy.py 
 
 for f in $runlist
 do
@@ -135,4 +136,4 @@ else
 fi
 
 
-rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_${9}_E.sh
+rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${11}_${fillnum}_${9}_E.sh

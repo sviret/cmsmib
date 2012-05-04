@@ -4,7 +4,7 @@
 #
 # data_fill_rawextractor_fast.sh
 #
-# Script invoked by runDQ_extraction_fillraw.sh
+# Script invoked by runDQ_extraction_fillraw_fast.sh
 # Extract the information for a given Fill 
 #
 # A first loop on RAW data files is made in order 
@@ -21,8 +21,9 @@
 # ${3}: the list of run in the fill
 # ${4}: the global tag to be used
 # ${5}: the main release directory
-# ${6}: the storage directory
+# ${6}: the storage directory 
 # ${7}: the maximum number of files to process in one run
+# ${8}: the type of extraction (interfill or collision)
 #
 # Author: Seb Viret <viret@in2p3.fr>  (26/10/2011)
 #
@@ -38,12 +39,12 @@
 
 CMSSW_PROJECT_SRC=${5}
 STEP=ProcessData
-YEAR=2011
+YEAR=2012
 TOP=$PWD
 
 
 cd $CMSSW_PROJECT_SRC
-export SCRAM_ARCH=slc5_amd64_gcc434
+export SCRAM_ARCH=slc5_amd64_gcc462
 eval `scramv1 runtime -sh` 
 
 
@@ -117,13 +118,13 @@ done
 
 if [ $toorecent = 1 ]; then
     echo 'Fill contains too recent stuff, skip it'
-    rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_E_fast.sh
+    rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${8}_${fillnum}_E_fast.sh
     exit
 fi
 
 if [ $compteur = 0 ]; then
     echo 'Fill contains no files yet, skip it'
-    rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_E_fast.sh
+    rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${8}_${fillnum}_E_fast.sh
     exit
 fi
 
@@ -165,11 +166,11 @@ do
 
   echo $nfirst,$nlast
 
-  echo "#\!/bin/bash" > $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_${c}_E.sh
-  echo "source $CMSSW_PROJECT_SRC/$STEP/batch/data_rawextractor.sh $rootdir $fillnum $nfiles ${4} $CMSSW_PROJECT_SRC ${6}/${2}_$nruns $nfirst $nlast $c $nruns" >> $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_${c}_E.sh
-  chmod 755 $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_${c}_E.sh
-  bsub -q 1nw -e /dev/null -o /tmp/${LOGNAME}_out.txt $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_${c}_E.sh
+  echo "#\!/bin/bash" > $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${8}_${fillnum}_${c}_E.sh
+  echo "source $CMSSW_PROJECT_SRC/$STEP/batch/data_rawextractor.sh $rootdir $fillnum $nfiles ${4} $CMSSW_PROJECT_SRC ${6}/${2}_$nruns $nfirst $nlast $c $nruns  ${8}" >> $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${8}_${fillnum}_${c}_E.sh
+  chmod 755 $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${8}_${fillnum}_${c}_E.sh
+  bsub -q 1nw -e /dev/null -o /tmp/${LOGNAME}_out.txt $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${8}_${fillnum}_${c}_E.sh
 
 done
 
-rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${fillnum}_E_fast.sh
+rm $CMSSW_PROJECT_SRC/$STEP/batch/TMP_FILES/data_extrRAW_${8}_${fillnum}_E_fast.sh
